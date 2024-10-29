@@ -1,4 +1,5 @@
 from urllib.parse import urlunparse
+from datetime import datetime
 
 REED_API_BASE_URL = "www.reed.co.uk"
 DEFAULT_API_PATH = "api"
@@ -20,3 +21,7 @@ def get_base_url(
     url = urlunparse((protocol, netloc, path, "", "", ""))
 
     return url
+
+
+def parse_date_string(date_string):
+    return datetime.strptime(date_string, "%d/%m/%Y")
