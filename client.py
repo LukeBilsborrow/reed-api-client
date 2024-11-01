@@ -82,4 +82,4 @@ class ReedApiClient:
     def _check_async_client(self) -> None:
         if getattr(self, "_async_session", None) is None:
             self._async_session = httpx.AsyncClient()
-            self._async_session.auth = (self.api_token, "")
+            self._async_session.auth = (self.api_token, "")  # type: ignore

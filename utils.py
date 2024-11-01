@@ -54,11 +54,12 @@ def parse_date_string(date_string: str) -> datetime:
 
 def parse_response(
     response: httpx.Response | Coroutine[Any, Any, httpx.Response],
-    parse_func: Callable[[httpx.Response], '_model.APIResponseBaseModel'],
+    parse_func: Callable[[httpx.Response], "_model.APIResponseBaseModel"],
     use_async: bool = False,
-) -> '_model.APIResponseBaseModel' | Coroutine[Any, Any, '_model.APIResponseBaseModel']:
+) -> "_model.APIResponseBaseModel" | Coroutine[Any, Any, "_model.APIResponseBaseModel"]:
     result: (
-        '_model.APIResponseBaseModel' | Coroutine[Any, Any, '_model.APIResponseBaseModel']
+        "_model.APIResponseBaseModel"
+        | Coroutine[Any, Any, "_model.APIResponseBaseModel"]
     )
     if use_async:
         result = modify_result_async(response, parse_func)
@@ -72,20 +73,16 @@ def parse_response(
     return result
 
 
-def modify_result_async(
+async def modify_result_async(
     coro, result_parser: Callable[[httpx.Response], Any]
-) -> Coroutine[Any, Any, '_model.APIResponseBaseModel']:
-    async def wrapper(
-        coro: Coroutine[Any, Any, httpx.Response]
-    ) -> _model.APIResponseBaseModel:
-        coro_result: httpx.Response = await coro
-        parsed_result = result_parser(coro_result)
-        return parsed_result
+) -> Coroutine[Any, Any, "_model.APIResponseBaseModel"]:
 
-    return wrapper(coro)
+    coro_result: httpx.Response = await coro
+    parsed_result = result_parser(coro_result)
+    return parsed_result
 
 
-def _job_search_response_parser(response: httpx.Response) -> '_model.JobSearchResponse':
+def _job_search_response_parser(response: httpx.Response) -> "_model.JobSearchResponse":
     print(response)
     print(response.request.url)
 
