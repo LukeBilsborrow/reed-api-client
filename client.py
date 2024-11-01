@@ -1,4 +1,5 @@
-from typing import Any, Coroutine, Optional
+from typing import Any, Coroutine, Literal, Optional, Tuple, overload
+import _model
 import utils
 import httpx
 
@@ -20,45 +21,47 @@ class ReedApiClient:
         self.api_token = api_token
         self.base_url = override_full_url or utils.get_base_url()
         self.session = httpx.Client()
-        self.session.auth = (self.api_token, "")
+        self.session.auth = (self.api_token, "")  # type: ignore
 
-    # update the parameters of this function to match the
     def job_search(
         self,
         use_async: bool = False,
-        employerId: int = None,
-        employerProfileId: int = None,
-        keywords: str = None,
-        locationName: str = None,
-        distanceFromLocation: int = 10,
-        permanent: bool = None,
-        contract: bool = None,
-        temp: bool = None,
-        partTime: bool = None,
-        fullTime: bool = None,
-        minimumSalary: int = None,
-        maximumSalary: int = None,
-        postedByRecruitmentAgency: bool = None,
-        postedByDirectEmployer: bool = None,
-        graduate: bool = None,
-        resultsToTake: int = 100,
-        resultsToSkip: int = 0,
-    ):
+        employerId: Optional[int] = None,
+        employerProfileId: Optional[int] = None,
+        keywords: Optional[str] = None,
+        locationName: Optional[str] = None,
+        distanceFromLocation: Optional[int] = 10,
+        permanent: Optional[bool] = None,
+        contract: Optional[bool] = None,
+        temp: Optional[bool] = None,
+        partTime: Optional[bool] = None,
+        fullTime: Optional[bool] = None,
+        minimumSalary: Optional[int] = None,
+        maximumSalary: Optional[int] = None,
+        postedByRecruitmentAgency: Optional[bool] = None,
+        postedByDirectEmployer: Optional[bool] = None,
+        graduate: Optional[bool] = None,
+        resultsToTake: Optional[int] = 100,
+        resultsToSkip: Optional[int] = 0,
+    ) -> _model.APIResponseBaseModel | Coroutine[Any, Any, _model.APIResponseBaseModel]:
         # saves the parameters in a dictionary
         # so we don't have to pass them individually
         params = locals()
         del params["self"]
 
-        res = self._make_request(url=f"{self.base_url}/{JOB_SEARCH_PATH}", **params)
+        response_or_coro = self._make_request(
+            url=f"{self.base_url}/{JOB_SEARCH_PATH}", **params
+        )
 
-        return res
+        model = utils.parse_response(
+            response_or_coro, utils._job_search_response_parser, use_async=use_async
+        )
+        return model
 
     def _make_request(self, url, use_async=False, **kwargs):
         params = {k: v for k, v in kwargs.items() if v is not None}
         if use_async:
-            res: Coroutine[Any, Any, httpx.Response] = self._make_async_request(
-                url, params
-            )
+            res = self._make_async_request(url, params)
 
         else:
             res = self._make_sync_request(url, params)
@@ -77,5 +80,6 @@ class ReedApiClient:
         return coro
 
     def _check_async_client(self) -> None:
-        if not self._async_session:
+        if getattr(self, "_async_session", None) is None:
             self._async_session = httpx.AsyncClient()
+            self._async_session.auth = (self.api_token, "")
