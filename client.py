@@ -41,7 +41,7 @@ class ReedApiClient:
         graduate: Optional[bool] = None,
         resultsToTake: Optional[int] = 100,
         resultsToSkip: Optional[int] = 0,
-    ) -> _model.APIResponseBaseModel | Coroutine[Any, Any, _model.APIResponseBaseModel]:
+    ) -> _model.JobSearchResponse | Coroutine[Any, Any, _model.JobSearchResponse]:
         # saves the parameters in a dictionary
         # so we don't have to pass them individually
         params = locals()
@@ -57,12 +57,9 @@ class ReedApiClient:
         return model
 
     def job_detail(
-        self,
-        job_id: int,
-        use_async: bool = False
-    ) -> _model.APIResponseBaseModel | Coroutine[Any, Any, _model.APIResponseBaseModel]:
-        #raise NotImplementedError()
-
+        self, job_id: int, use_async: bool = False
+    ) -> _model.JobDetailResponse | Coroutine[Any, Any, _model.JobDetailResponse]:
+        # raise NotImplementedError()
 
         _detail_url = utils.get_detail_url(job_id, self.base_url)
         response_or_coro = self._make_request(url=_detail_url)

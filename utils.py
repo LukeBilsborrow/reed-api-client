@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine, List, Optional
+from typing import Any, Callable, Coroutine, List, Optional, TypeVar
 from urllib.parse import urlunparse
 from datetime import datetime
 import httpx
@@ -8,6 +8,13 @@ REED_API_BASE_URL = "www.reed.co.uk"
 DEFAULT_API_PATH = "api"
 DEFAULT_VERSION_STRING = "1.0"
 DEFAULT_PROTOCOL = "https"
+
+# A generic type to represent the type a parser function should return
+# This can be any type that inherits from _model.APIResponseBaseModel
+# but may vary depending on the types passed into the function
+TGenericApiResponse = TypeVar(
+    "TGenericApiResponse", bound="_model.APIResponseBaseModel"
+)
 
 
 def get_base_url(
@@ -38,17 +45,20 @@ def get_base_url(
 
     return url
 
-def get_detail_url(job_id:int|str, base_url:Optional[str] = get_base_url()) -> str:
+
+def get_detail_url(job_id: int | str, base_url: Optional[str] = get_base_url()) -> str:
     # https://www.reed.co.uk/api/1.0/jobs/132
     _url = f"{base_url}/jobs/{job_id}"
     return _url
 
-def get_search_url(base_url:Optional[str] = get_base_url()) -> str:
+
+def get_search_url(base_url: Optional[str] = get_base_url()) -> str:
     # https://www.reed.co.uk/api/1.0/search
     JOB_SEARCH_PATH = "search"
     _url = f"{base_url}/{JOB_SEARCH_PATH}"
 
     return _url
+
 
 def parse_date_string(date_string: str) -> Optional[datetime]:
     """
@@ -62,7 +72,7 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
     """
     _date = None
     try:
-        #_date = datetime.strptime(date_string, "%Y-%m-%d")
+        # _date = datetime.strptime(date_string, "%Y-%m-%d")
         _date = datetime.strptime(date_string, "%d/%m/%Y")
     except BaseException:
         # TODO: Add logging
@@ -72,13 +82,10 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
 
 def parse_response(
     response: httpx.Response | Coroutine[Any, Any, httpx.Response],
-    parse_func: Callable[[httpx.Response], "_model.APIResponseBaseModel"],
+    parse_func: Callable[[httpx.Response], TGenericApiResponse],
     use_async: bool = False,
-) -> "_model.APIResponseBaseModel" | Coroutine[Any, Any, "_model.APIResponseBaseModel"]:
-    result: (
-        "_model.APIResponseBaseModel"
-        | Coroutine[Any, Any, "_model.APIResponseBaseModel"]
-    )
+) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
+    result: TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]
     if use_async:
         result = modify_result_async(response, parse_func)
 
@@ -92,8 +99,8 @@ def parse_response(
 
 
 async def modify_result_async(
-    coro, result_parser: Callable[[httpx.Response], Any]
-) -> Coroutine[Any, Any, "_model.APIResponseBaseModel"]:
+    coro, result_parser: Callable[[httpx.Response], TGenericApiResponse]
+) -> TGenericApiResponse:
 
     coro_result: httpx.Response = await coro
     parsed_result = result_parser(coro_result)
@@ -106,10 +113,12 @@ def _job_search_response_parser(response: httpx.Response) -> "_model.JobSearchRe
         jobs=models, raw_response=response, raw_request=response.request
     )
 
-def _job_detail_response_parser(response: httpx.Response) -> "_model.JobDetail":
-    data = response.json()
 
-    print(data)
-    result = _model.JobDetail(**data)
-    response = _model.JobDetailResponse(job=result, raw_response=response, raw_request=response.request)
-    return response
+def _job_detail_response_parser(response: httpx.Response) -> "_model.JobDetailResponse":
+    raw_response_data = response.json()
+
+    data = _model.JobDetail(**raw_response_data)
+    result_model = _model.JobDetailResponse(
+        job=data, raw_response=response, raw_request=response.request
+    )
+    return result_model
