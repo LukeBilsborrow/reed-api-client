@@ -97,6 +97,11 @@ def parse_response(
 
     return result
 
+def check_response(response: httpx.Response) -> httpx.Response:
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status code {response.status_code}")
+    return response
+
 
 async def modify_result_async(
     coro, result_parser: Callable[[httpx.Response], TGenericApiResponse]

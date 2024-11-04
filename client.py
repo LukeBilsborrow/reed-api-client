@@ -75,12 +75,22 @@ class ReedApiClient:
             res = self._make_async_request(url, params)
 
         else:
+            # TODO add error handling
             res = self._make_sync_request(url, params)
 
         return res
 
     def _make_sync_request(self, url, params) -> httpx.Response:
-        response = self.session.get(url=url, params=params)
+        # if the request fails, we want to attempt to provide a more useful error
+        try:
+            response = self.session.get(url=url, params=params)
+
+        # TODO catch more specific exceptions
+        except BaseException as e:
+            # TODO add logging
+            raise e
+        response = utils.check_response(response)
+
         return response
 
     def _make_async_request(
@@ -88,6 +98,19 @@ class ReedApiClient:
     ) -> Coroutine[Any, Any, httpx.Response]:
         self._check_async_client()
         coro = self._async_session.get(url=url, params=params)
+
+        async def _check_response_wrapper(response_coro):
+            try:
+                response = await response_coro
+            # TODO catch more specific exceptions
+            except BaseException as e:
+                # TODO add logging
+                raise e
+            response = utils.check_response(response)
+
+            return response
+
+        coro = _check_response_wrapper(coro)
         return coro
 
     def _check_async_client(self) -> None:
