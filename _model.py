@@ -4,13 +4,76 @@ from datetime import date
 import utils
 import httpx
 
-
 class APIResponseBaseModel(BaseModel):
     raw_request: Optional[httpx.Request]
     raw_response: Optional[httpx.Response]
 
     class Config:
         arbitrary_types_allowed = True
+
+
+
+class JobSearchPartialJob(BaseModel):
+    jobId: str
+    employerId: int
+    employerName: str
+    employerProfileId: Optional[int]
+    employerProfileName: Optional[str]
+    jobTitle: str
+    locationName: str
+    minimumSalary: Optional[float]
+    maximumSalary: Optional[float]
+    currency: Optional[str]
+    expirationDate: date
+    postDate: date = Field(alias="date")
+    jobDescription: str
+    applications: int
+    jobUrl: str
+
+    validate_date_fields = field_validator("expirationDate", "postDate", mode="before")(
+        utils.parse_date_string
+    )
+
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
+
+class JobSearchResponse(APIResponseBaseModel):
+
+    jobs: list[JobSearchPartialJob]
+
+
+class JobDetail(BaseModel):
+    employerId: int
+    employerName: str
+    jobId: int
+    jobTitle: str
+    locationName: str
+    minimumSalary: Optional[float]
+    maximumSalary: Optional[float]
+    yearlyMinimumSalary: Optional[float]
+    yearlyMaximumSalary: Optional[float]
+    currency: Optional[str]
+    salaryType: str
+    salary: str
+    postDate: date
+    expirationDate: date
+    externalUrl: str
+    jobUrl: str
+    partTime: bool
+    fullTime: bool
+    contractType: str
+    jobDescription: str
+    applicationCount: int
+
+    validate_date_fields = field_validator("expirationDate", "postDate", mode="before")(
+        utils.parse_date_string
+    )
+
+
+
+
+class JobDetailResponse(APIResponseBaseModel):
+    job: JobDetail
 
 
 class JobSearchRequest(BaseModel):
@@ -54,31 +117,5 @@ class JobSearchRequest(BaseModel):
             raise ValueError("resultsToSkip must be a positive number")
         return v
 
-
-class PartialJob(BaseModel):
-    jobId: str
-    employerId: int
-    employerName: str
-    employerProfileId: Optional[int]
-    employerProfileName: Optional[str]
-    jobTitle: str
-    locationName: str
-    minimumSalary: Optional[float]
-    maximumSalary: Optional[float]
-    currency: Optional[str]
-    expirationDate: date
-    postDate: date = Field(alias="date")
-    jobDescription: str
-    applications: int
-    jobUrl: str
-
-    validate_date_fields = field_validator("expirationDate", "postDate", mode="before")(
-        utils.parse_date_string
-    )
-
-    model_config = ConfigDict(coerce_numbers_to_str=True)
-
-
-class JobSearchResponse(APIResponseBaseModel):
-
-    jobs: list[PartialJob]
+class JobDetailRequest(JobSearchRequest):
+    jobId: int

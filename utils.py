@@ -38,6 +38,17 @@ def get_base_url(
 
     return url
 
+def get_detail_url(job_id:int|str, base_url:Optional[str] = get_base_url()) -> str:
+    # https://www.reed.co.uk/api/1.0/jobs/132
+    _url = f"{base_url}/jobs/{job_id}"
+    return _url
+
+def get_search_url(base_url:Optional[str] = get_base_url()) -> str:
+    # https://www.reed.co.uk/api/1.0/search
+    JOB_SEARCH_PATH = "search"
+    _url = f"{base_url}/{JOB_SEARCH_PATH}"
+
+    return _url
 
 def parse_date_string(date_string: str) -> datetime:
     """
@@ -86,7 +97,7 @@ def _job_search_response_parser(response: httpx.Response) -> "_model.JobSearchRe
     print(response)
     print(response.request.url)
 
-    models = [_model.PartialJob(**job) for job in response.json()["results"]]
+    models = [_model.JobSearchPartialJob(**job) for job in response.json()["results"]]
     return _model.JobSearchResponse(
         jobs=models, raw_response=response, raw_request=response.request
     )

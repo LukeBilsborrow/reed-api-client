@@ -3,8 +3,6 @@ import _model
 import utils
 import httpx
 
-JOB_SEARCH_PATH = "search"
-
 
 class ReedApiClient:
     # session_Settings: dict
@@ -50,11 +48,27 @@ class ReedApiClient:
         del params["self"]
 
         response_or_coro = self._make_request(
-            url=f"{self.base_url}/{JOB_SEARCH_PATH}", **params
+            url=utils.get_search_url(self.base_url), **params
         )
 
         model = utils.parse_response(
             response_or_coro, utils._job_search_response_parser, use_async=use_async
+        )
+        return model
+
+    def job_detail(
+        self,
+        jobId: int,
+        use_async: bool = False
+    ) -> _model.APIResponseBaseModel | Coroutine[Any, Any, _model.APIResponseBaseModel]:
+        raise NotImplementedError()
+        params = locals()
+        del params["self"]
+
+        response_or_coro = self._make_request(url=utils.get_detail_url(self.client_url()), **params)
+
+        model = utils.parse_response(
+            response_or_coro, utils._job_detail_response_parser, use_async=use_async
         )
         return model
 
