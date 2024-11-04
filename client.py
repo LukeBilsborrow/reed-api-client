@@ -65,7 +65,7 @@ class ReedApiClient:
         params = locals()
         del params["self"]
 
-        response_or_coro = self._make_request(url=utils.get_detail_url(self.client_url()), **params)
+        response_or_coro = self._make_request(url=utils.get_detail_url(self.base_url), **params)
 
         model = utils.parse_response(
             response_or_coro, utils._job_detail_response_parser, use_async=use_async
