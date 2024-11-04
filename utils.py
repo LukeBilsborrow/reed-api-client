@@ -50,7 +50,7 @@ def get_search_url(base_url:Optional[str] = get_base_url()) -> str:
 
     return _url
 
-def parse_date_string(date_string: str) -> datetime:
+def parse_date_string(date_string: str) -> Optional[datetime]:
     """
     Parse a date string from the REED API into a datetime object.
 
@@ -60,7 +60,14 @@ def parse_date_string(date_string: str) -> datetime:
     Returns:
         datetime: The parsed datetime object
     """
-    return datetime.strptime(date_string, "%d/%m/%Y")
+    _date = None
+    try:
+        #_date = datetime.strptime(date_string, "%Y-%m-%d")
+        _date = datetime.strptime(date_string, "%d/%m/%Y")
+    except BaseException:
+        # TODO: Add logging
+        pass
+    return _date
 
 
 def parse_response(
@@ -94,10 +101,15 @@ async def modify_result_async(
 
 
 def _job_search_response_parser(response: httpx.Response) -> "_model.JobSearchResponse":
-    print(response)
-    print(response.request.url)
-
     models = [_model.JobSearchPartialJob(**job) for job in response.json()["results"]]
     return _model.JobSearchResponse(
         jobs=models, raw_response=response, raw_request=response.request
     )
+
+def _job_detail_response_parser(response: httpx.Response) -> "_model.JobDetail":
+    data = response.json()
+
+    print(data)
+    result = _model.JobDetail(**data)
+    response = _model.JobDetailResponse(job=result, raw_response=response, raw_request=response.request)
+    return response

@@ -58,14 +58,14 @@ class ReedApiClient:
 
     def job_detail(
         self,
-        jobId: int,
+        job_id: int,
         use_async: bool = False
     ) -> _model.APIResponseBaseModel | Coroutine[Any, Any, _model.APIResponseBaseModel]:
-        raise NotImplementedError()
-        params = locals()
-        del params["self"]
+        #raise NotImplementedError()
 
-        response_or_coro = self._make_request(url=utils.get_detail_url(self.base_url), **params)
+
+        _detail_url = utils.get_detail_url(job_id, self.base_url)
+        response_or_coro = self._make_request(url=_detail_url)
 
         model = utils.parse_response(
             response_or_coro, utils._job_detail_response_parser, use_async=use_async

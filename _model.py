@@ -24,13 +24,13 @@ class JobSearchPartialJob(BaseModel):
     minimumSalary: Optional[float]
     maximumSalary: Optional[float]
     currency: Optional[str]
-    expirationDate: date
-    postDate: date = Field(alias="date")
+    expirationDate: Optional[date]
+    postedDate: Optional[date] = Field(alias="date")
     jobDescription: str
     applications: int
     jobUrl: str
 
-    validate_date_fields = field_validator("expirationDate", "postDate", mode="before")(
+    validate_date_fields = field_validator("expirationDate", "postedDate", mode="before")(
         utils.parse_date_string
     )
 
@@ -43,7 +43,7 @@ class JobSearchResponse(APIResponseBaseModel):
 
 
 class JobDetail(BaseModel):
-    employerId: int
+    employerId: Optional[int]
     employerName: str
     jobId: int
     jobTitle: str
@@ -55,8 +55,8 @@ class JobDetail(BaseModel):
     currency: Optional[str]
     salaryType: str
     salary: str
-    postDate: date
-    expirationDate: date
+    postedDate: Optional[date] = Field(alias="datePosted")
+    expirationDate: Optional[date]
     externalUrl: str
     jobUrl: str
     partTime: bool
@@ -65,7 +65,7 @@ class JobDetail(BaseModel):
     jobDescription: str
     applicationCount: int
 
-    validate_date_fields = field_validator("expirationDate", "postDate", mode="before")(
+    validate_date_fields = field_validator("expirationDate", "postedDate", mode="before")(
         utils.parse_date_string
     )
 
