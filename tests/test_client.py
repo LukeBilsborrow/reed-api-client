@@ -35,3 +35,11 @@ async def test_job_search_async():
     print(result)
 
     assert type(result) == _model.JobSearchResponse
+
+
+def test_job_detail():
+    _client = client.ReedApiClient(TOKEN)
+    sample_job_id = _client.job_search(locationName="London", resultsToTake=1, use_async=False).jobs[0].jobId
+    result = _client.job_detail(sample_job_id, use_async=False)
+
+    assert type(result) == _model.JobDetailResult and result.job is not None
