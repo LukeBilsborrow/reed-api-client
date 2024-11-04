@@ -4,13 +4,13 @@ from datetime import date
 import utils
 import httpx
 
+
 class APIResponseBaseModel(BaseModel):
     raw_request: Optional[httpx.Request]
     raw_response: Optional[httpx.Response]
 
     class Config:
         arbitrary_types_allowed = True
-
 
 
 class JobSearchPartialJob(BaseModel):
@@ -30,9 +30,9 @@ class JobSearchPartialJob(BaseModel):
     applications: int
     jobUrl: str
 
-    validate_date_fields = field_validator("expirationDate", "postedDate", mode="before")(
-        utils.parse_date_string
-    )
+    validate_date_fields = field_validator(
+        "expirationDate", "postedDate", mode="before"
+    )(utils.parse_date_string)
 
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
@@ -65,11 +65,9 @@ class JobDetail(BaseModel):
     jobDescription: str
     applicationCount: int
 
-    validate_date_fields = field_validator("expirationDate", "postedDate", mode="before")(
-        utils.parse_date_string
-    )
-
-
+    validate_date_fields = field_validator(
+        "expirationDate", "postedDate", mode="before"
+    )(utils.parse_date_string)
 
 
 class JobDetailResponse(APIResponseBaseModel):
@@ -116,6 +114,7 @@ class JobSearchRequest(BaseModel):
         if v < 0:
             raise ValueError("resultsToSkip must be a positive number")
         return v
+
 
 class JobDetailRequest(JobSearchRequest):
     jobId: int
