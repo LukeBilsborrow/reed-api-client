@@ -14,7 +14,7 @@ class APIResponseBaseModel(BaseModel):
 
 
 class JobSearchPartialJob(BaseModel):
-    jobId: str
+    jobId: int
     employerId: int
     employerName: str
     employerProfileId: Optional[int]
@@ -33,8 +33,6 @@ class JobSearchPartialJob(BaseModel):
     validate_date_fields = field_validator(
         "expirationDate", "postedDate", mode="before"
     )(utils.parse_date_string)
-
-    model_config = ConfigDict(coerce_numbers_to_str=True)
 
 
 class JobSearchResponse(APIResponseBaseModel):

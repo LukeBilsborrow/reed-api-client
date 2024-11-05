@@ -1,4 +1,14 @@
-from typing import Any, Callable, Coroutine, List, Optional, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    List,
+    Literal,
+    NewType,
+    Optional,
+    TypeVar,
+    overload,
+)
 from urllib.parse import urlunparse
 from datetime import datetime
 import httpx
@@ -8,6 +18,9 @@ REED_API_BASE_URL = "www.reed.co.uk"
 DEFAULT_API_PATH = "api"
 DEFAULT_VERSION_STRING = "1.0"
 DEFAULT_PROTOCOL = "https"
+
+UseSync = NewType("UseSync", bool)
+UseAsync = NewType("UseAsync", bool)
 
 # A generic type to represent the type a parser function should return
 # This can be any type that inherits from _model.APIResponseBaseModel
@@ -80,22 +93,37 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
     return _date
 
 
+# @overload
+# def parse_response(
+#     response: httpx.Response,
+#     parse_func: Callable[[httpx.Response], TGenericApiResponse],
+#     sync_type: type[UseSync] | type[UseAsync] = UseSync,
+# ) -> TGenericApiResponse: ...
+
+
+# @overload
+# def parse_response(
+#     response: Coroutine[Any, Any, httpx.Response],
+#     parse_func: Callable[[httpx.Response], TGenericApiResponse],
+#     sync_type: type[UseSync] | type[UseAsync] = UseSync,
+# ) -> Coroutine[Any, Any, TGenericApiResponse]: ...
+
+
 def parse_response(
     response: httpx.Response | Coroutine[Any, Any, httpx.Response],
     parse_func: Callable[[httpx.Response], TGenericApiResponse],
-    use_async: bool = False,
+    sync_type: type[UseSync] | type[UseAsync] = UseSync,
 ) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
     result: TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]
-    if use_async:
-        result = modify_result_async(response, parse_func)
+    if isinstance(response, Coroutine):
+        return modify_result_async(response, parse_func)
 
     else:
         if isinstance(response, httpx.Response):
-            result = parse_func(response)
+            return parse_func(response)
         else:
             raise TypeError("response must be a httpx.Response object")
 
-    return result
 
 def check_response(response: httpx.Response) -> httpx.Response:
     if response.status_code != 200:
