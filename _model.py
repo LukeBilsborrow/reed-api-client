@@ -1,15 +1,17 @@
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import date
-import utils
+from typing import Optional
+
 import httpx
+from pydantic import BaseModel, Field, field_validator
+
+import utils
 
 
 class APIResponseBaseModel(BaseModel):
     raw_request: Optional[httpx.Request]
     raw_response: Optional[httpx.Response]
 
-    class Config:
+    class Config:  # pylint: disable=too-few-public-methods
         arbitrary_types_allowed = True
 
 
@@ -30,9 +32,8 @@ class JobSearchPartialJob(BaseModel):
     applications: int
     jobUrl: str
 
-    validate_date_fields = field_validator(
-        "expirationDate", "postedDate", mode="before"
-    )(utils.parse_date_string)
+    validate_date_fields = field_validator("expirationDate", "postedDate",
+                                           mode="before")(utils.parse_date_string)
 
 
 class JobSearchResponse(APIResponseBaseModel):
@@ -63,9 +64,8 @@ class JobDetail(BaseModel):
     jobDescription: str
     applicationCount: int
 
-    validate_date_fields = field_validator(
-        "expirationDate", "postedDate", mode="before"
-    )(utils.parse_date_string)
+    validate_date_fields = field_validator("expirationDate", "postedDate",
+                                           mode="before")(utils.parse_date_string)
 
 
 class JobDetailResponse(APIResponseBaseModel):
@@ -96,23 +96,33 @@ class JobSearchRequest(BaseModel):
     resultsToSkip: Optional[int] = 0
 
     @field_validator("distanceFromLocation")
+    # pylint: disable=no-self-argument, invalid-name
     def distanceFromLocation_cannot_be_negative(cls, v):
+        # pylint: enable=no-self-argument, invalid-name
+
         if v < 0:
             raise ValueError("distanceFromLocation must be a positive number")
         return v
 
     @field_validator("resultsToTake")
+    # pylint: disable=no-self-argument, invalid-name
     def resultsToTake_cannot_be_too_large(cls, v):
+        # pylint: enable=no-self-argument, invalid-name
+
         if v > 100:
             raise ValueError("resultsToTake must be less than or equal to 100")
         return v
 
     @field_validator("resultsToSkip")
+    # pylint: disable=no-self-argument, invalid-name
     def resultsToSkip_cannot_be_negative(cls, v):
+        # pylint: enable=no-self-argument, invalid-name
+
         if v < 0:
             raise ValueError("resultsToSkip must be a positive number")
         return v
 
 
 class JobDetailRequest(JobSearchRequest):
+    # pylint: disable=too-few-public-methods
     jobId: int

@@ -1,14 +1,30 @@
-from typing import (
-    Any,
-    Coroutine,
-    Optional,
-    overload,
-)
-import _model
-import utils
+from typing import Any, Coroutine, Mapping, Optional, TypedDict, overload
+
 import httpx
 
-from utils import UseSync, UseAsync
+import _model
+import utils
+from utils import UseAsync, UseSync
+
+
+class JobSearchParams(TypedDict, total=False):
+    employer_id: Optional[int]
+    employer_profile_id: Optional[int]
+    keywords: Optional[str]
+    location_name: Optional[str]
+    distance_from_location: Optional[int]
+    permanent: Optional[bool]
+    contract: Optional[bool]
+    temp: Optional[bool]
+    part_time: Optional[bool]
+    full_time: Optional[bool]
+    minimum_salary: Optional[int]
+    maximum_salary: Optional[int]
+    posted_by_recruitment_agency: Optional[bool]
+    posted_by_direct_employer: Optional[bool]
+    graduate: Optional[bool]
+    results_to_take: Optional[int]
+    results_to_skip: Optional[int]
 
 
 class ReedApiClient:
@@ -31,115 +47,73 @@ class ReedApiClient:
     @overload
     def job_search(
         self,
+        *,
+        params: JobSearchParams,
         sync_type: type[UseSync] = ...,
-        employerId: Optional[int] = ...,
-        employerProfileId: Optional[int] = ...,
-        keywords: Optional[str] = ...,
-        locationName: Optional[str] = ...,
-        distanceFromLocation: Optional[int] = ...,
-        permanent: Optional[bool] = ...,
-        contract: Optional[bool] = ...,
-        temp: Optional[bool] = ...,
-        partTime: Optional[bool] = ...,
-        fullTime: Optional[bool] = ...,
-        minimumSalary: Optional[int] = ...,
-        maximumSalary: Optional[int] = ...,
-        postedByRecruitmentAgency: Optional[bool] = ...,
-        postedByDirectEmployer: Optional[bool] = ...,
-        graduate: Optional[bool] = ...,
-        resultsToTake: Optional[int] = ...,
-        resultsToSkip: Optional[int] = ...,
-    ) -> _model.JobSearchResponse: ...
+    ) -> _model.JobSearchResponse:
+        ...
 
     @overload
     def job_search(
         self,
-        sync_type: type[UseAsync],
-        employerId: Optional[int] = ...,
-        employerProfileId: Optional[int] = ...,
-        keywords: Optional[str] = ...,
-        locationName: Optional[str] = ...,
-        distanceFromLocation: Optional[int] = ...,
-        permanent: Optional[bool] = ...,
-        contract: Optional[bool] = ...,
-        temp: Optional[bool] = ...,
-        partTime: Optional[bool] = ...,
-        fullTime: Optional[bool] = ...,
-        minimumSalary: Optional[int] = ...,
-        maximumSalary: Optional[int] = ...,
-        postedByRecruitmentAgency: Optional[bool] = ...,
-        postedByDirectEmployer: Optional[bool] = ...,
-        graduate: Optional[bool] = ...,
-        resultsToTake: Optional[int] = ...,
-        resultsToSkip: Optional[int] = ...,
-    ) -> Coroutine[Any, Any, _model.JobSearchResponse]: ...
+        *,
+        params: JobSearchParams,
+        sync_type: type[UseAsync] = ...,
+    ) -> Coroutine[Any, Any, _model.JobSearchResponse]:
+        ...
 
     def job_search(
         self,
+        *,
+        params: JobSearchParams,
         sync_type: type[UseSync] | type[UseAsync] = UseSync,
-        employerId: Optional[int] = None,
-        employerProfileId: Optional[int] = None,
-        keywords: Optional[str] = None,
-        locationName: Optional[str] = None,
-        distanceFromLocation: Optional[int] = 10,
-        permanent: Optional[bool] = None,
-        contract: Optional[bool] = None,
-        temp: Optional[bool] = None,
-        partTime: Optional[bool] = None,
-        fullTime: Optional[bool] = None,
-        minimumSalary: Optional[int] = None,
-        maximumSalary: Optional[int] = None,
-        postedByRecruitmentAgency: Optional[bool] = None,
-        postedByDirectEmployer: Optional[bool] = None,
-        graduate: Optional[bool] = None,
-        resultsToTake: Optional[int] = 100,
-        resultsToSkip: Optional[int] = 0,
     ) -> _model.JobSearchResponse | Coroutine[Any, Any, _model.JobSearchResponse]:
-        # saves the parameters in a dictionary
-        # so we don't have to pass them individually
-        params = locals()
-        del params["self"]
-        del params["sync_type"]
 
-        coro_or_response = self._make_request(
-            url=utils.get_search_url(self.base_url), sync_type=sync_type, params=params
-        )
+        coro_or_response = self._make_request(utils.get_search_url(self.base_url),
+                                              sync_type=sync_type,
+                                              params=params)
 
-        return utils.parse_response(
-            coro_or_response, utils._job_search_response_parser
-        )
+        return utils.parse_response(coro_or_response, utils.job_search_response_parser)
+
+    @overload
+    def job_detail(self,
+                   job_id: int,
+                   *,
+                   sync_type: type[UseSync] = ...) -> _model.JobDetailResponse:
+        ...
 
     @overload
     def job_detail(
-        self, job_id: int, *, sync_type: type[UseSync] = ...
-    ) -> _model.JobDetailResponse: ...
+            self,
+            job_id: int,
+            *,
+            sync_type: type[UseAsync] = ...) -> Coroutine[Any, Any, _model.JobDetailResponse]:
+        ...
 
-    @overload
-    def job_detail(
-        self, job_id: int, *, sync_type: type[UseAsync] = ...
-    ) -> Coroutine[Any, Any, _model.JobDetailResponse]: ...
-
-    def job_detail(
-        self, job_id: int, *, sync_type: type[UseSync] | type[UseAsync] = UseSync
-    ):
+    def job_detail(self, job_id: int, *, sync_type: type[UseSync] | type[UseAsync] = UseSync):
 
         detail_url = utils.get_detail_url(job_id, self.base_url)
         response_or_coro = self._make_request(detail_url, sync_type=sync_type)
 
-        model = utils.parse_response(
-            response_or_coro, utils._job_detail_response_parser
-        )
+        model = utils.parse_response(response_or_coro, utils.job_detail_response_parser)
         return model
 
     @overload
-    def _make_request(
-        self, url: str, *, sync_type: type[UseSync] = ..., params: dict[str, Any] = ...
-    ) -> httpx.Response: ...
+    def _make_request(self,
+                      url: str,
+                      *,
+                      sync_type: type[UseSync] = ...,
+                      params: Optional[Mapping[str, Any]] = ...) -> httpx.Response:
+        ...
 
     @overload
     def _make_request(
-        self, url: str, *, sync_type: type[UseAsync] = ..., params: dict[str, Any] = ...
-    ) -> Coroutine[Any, Any, httpx.Response]: ...
+            self,
+            url: str,
+            *,
+            sync_type: type[UseAsync] = ...,
+            params: Optional[Mapping[str, Any]] = ...) -> Coroutine[Any, Any, httpx.Response]:
+        ...
 
     def _make_request(
         self,
@@ -147,18 +121,17 @@ class ReedApiClient:
         *,
         sync_type: type[UseSync] | type[UseAsync] = UseSync,
         # probably should not have mutable default
-        params: dict[str, Any] = {}
+        params: Optional[Mapping[str, Any]] = None
     ) -> httpx.Response | Coroutine[Any, Any, httpx.Response]:
-        params = {k: v for k, v in params.items() if v is not None}
+        if params:
+            params = {k: v for k, v in params.items() if v is not None}
         if sync_type is UseAsync:
-            _coro: Coroutine[Any, Any, httpx.Response] = self._make_async_request(
-                url, params
-            )
+            _coro: Coroutine[Any, Any, httpx.Response] = self._make_async_request(url, params)
             return _coro
-        else:
-            # TODO add error handling
-            response = self._make_sync_request(url, params)
-            return response
+
+        # TODO add error handling
+        response = self._make_sync_request(url, params)
+        return response
 
     def _make_sync_request(self, url, params) -> httpx.Response:
         # if the request fails, we want to attempt to provide a more useful error
@@ -174,8 +147,8 @@ class ReedApiClient:
         return response
 
     def _make_async_request(
-        self, url: str, params: dict[str, str]
-    ) -> Coroutine[Any, Any, httpx.Response]:
+            self, url: str, params: Optional[Mapping[str,
+                                                     Any]]) -> Coroutine[Any, Any, httpx.Response]:
         self._check_async_client()
         coro = self._async_session.get(url=url, params=params)
 
