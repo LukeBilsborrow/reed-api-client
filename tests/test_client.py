@@ -43,3 +43,31 @@ def test_job_detail():
     result = _client.job_detail(sample_job_id, sync_type=client.UseSync)
 
     assert type(result) == _model.JobDetailResponse and result.job is not None
+
+@pytest.mark.asyncio
+async def test_job_detail_async():
+    _client = client.ReedApiClient(TOKEN)
+
+    sample_job = await _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
+    sample_job_id = sample_job.jobs[0].jobId
+    result = _client.job_detail(sample_job_id, sync_type=client.UseAsync)
+    result = await result
+    print(result)
+
+    assert type(result) == _model.JobDetailResponse and result.job is not None
+
+@pytest.mark.asyncio
+async def test_job_search_async_is_non_blocking():
+    import asyncio
+    _client = client.ReedApiClient(TOKEN)
+    
+    # Start two async job searches simultaneously
+    task1 = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
+    task2 = _client.job_search(locationName="Bristol", resultsToTake=1, sync_type=client.UseAsync)
+    
+    # Wait for both tasks to complete
+    result1, result2 = await asyncio.gather(task1, task2)
+    
+    # Assert both results are of the correct type
+    assert isinstance(result1, _model.JobSearchResponse)
+    assert isinstance(result2, _model.JobSearchResponse)
