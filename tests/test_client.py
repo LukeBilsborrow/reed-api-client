@@ -1,11 +1,14 @@
+import asyncio
+import os
+
+import dotenv
 import pytest
+
 import _model
 import client
 import utils
-import dotenv
-import os
 
-pytest_plugins = ("pytest_asyncio",)
+pytest_plugins = ("pytest_asyncio", )
 dotenv.load_dotenv()
 TOKEN = os.getenv("REED_API_KEY")
 
@@ -16,65 +19,86 @@ def test_client_default_url():
 
 
 def test_client_custom_url():
-    _client = client.ReedApiClient(TOKEN, override_full_url="https://example.com")
+    _client = client.ReedApiClient(TOKEN,
+                                   override_full_url="https://example.com")
     assert _client.base_url == "https://example.com"
 
 
 def test_job_search():
     _client = client.ReedApiClient(TOKEN)
-    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync)
+    result = _client.job_search(locationName="London",
+                                resultsToTake=1,
+                                sync_type=client.UseSync)
 
-    assert type(result) == _model.JobSearchResponse
+    assert isinstance(result, _model.JobSearchResponse)
 
 
 @pytest.mark.asyncio
 async def test_job_search_async():
     _client = client.ReedApiClient(TOKEN)
-    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
+    result = _client.job_search(locationName="London",
+                                resultsToTake=1,
+                                sync_type=client.UseAsync)
     result = await result
     print(result)
 
-    assert type(result) == _model.JobSearchResponse
+    assert isinstance(result, _model.JobSearchResponse)
 
 
 def test_job_detail():
     _client = client.ReedApiClient(TOKEN)
-    sample_job_id = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync).jobs[0].jobId
+    sample_job_id = _client.job_search(locationName="London",
+                                       resultsToTake=1,
+                                       sync_type=client.UseSync).jobs[0].jobId
     result = _client.job_detail(sample_job_id, sync_type=client.UseSync)
 
-    assert type(result) == _model.JobDetailResponse and result.job is not None
+    assert isinstance(result,
+                      _model.JobDetailResponse) and result.job is not None
+
 
 @pytest.mark.asyncio
 async def test_job_detail_async():
     _client = client.ReedApiClient(TOKEN)
 
-    sample_job = await _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
+    sample_job = await _client.job_search(locationName="London",
+                                          resultsToTake=1,
+                                          sync_type=client.UseAsync)
     sample_job_id = sample_job.jobs[0].jobId
     result = _client.job_detail(sample_job_id, sync_type=client.UseAsync)
     result = await result
     print(result)
 
-    assert type(result) == _model.JobDetailResponse and result.job is not None
+    assert isinstance(result,
+                      _model.JobDetailResponse) and result.job is not None
+
 
 @pytest.mark.asyncio
 async def test_job_search_async_is_non_blocking():
-    import asyncio
     _client = client.ReedApiClient(TOKEN)
-    
+
     # Start two async job searches simultaneously
-    task1 = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
-    task2 = _client.job_search(locationName="Bristol", resultsToTake=1, sync_type=client.UseAsync)
-    
+    task1 = _client.job_search(locationName="London",
+                               resultsToTake=1,
+                               sync_type=client.UseAsync)
+    task2 = _client.job_search(locationName="Bristol",
+                               resultsToTake=1,
+                               sync_type=client.UseAsync)
+
     # Wait for both tasks to complete
     result1, result2 = await asyncio.gather(task1, task2)
-    
+
     # Assert both results are of the correct type
     assert isinstance(result1, _model.JobSearchResponse)
     assert isinstance(result2, _model.JobSearchResponse)
 
+
 def test_job_search_recognises_location():
     _client = client.ReedApiClient(TOKEN)
-    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync)
-    second_result = _client.job_search(locationName="Preston", resultsToTake=1, sync_type=client.UseSync)
+    result = _client.job_search(locationName="London",
+                                resultsToTake=1,
+                                sync_type=client.UseSync)
+    second_result = _client.job_search(locationName="Preston",
+                                       resultsToTake=1,
+                                       sync_type=client.UseSync)
 
     assert result.jobs[0].jobId != second_result.jobs[0].jobId
