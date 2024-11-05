@@ -93,28 +93,24 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
     return _date
 
 
-# @overload
-# def parse_response(
-#     response: httpx.Response,
-#     parse_func: Callable[[httpx.Response], TGenericApiResponse],
-#     sync_type: type[UseSync] | type[UseAsync] = UseSync,
-# ) -> TGenericApiResponse: ...
+@overload
+def parse_response(
+    response: httpx.Response,
+    parse_func: Callable[[httpx.Response], TGenericApiResponse],
+) -> TGenericApiResponse: ...
 
 
-# @overload
-# def parse_response(
-#     response: Coroutine[Any, Any, httpx.Response],
-#     parse_func: Callable[[httpx.Response], TGenericApiResponse],
-#     sync_type: type[UseSync] | type[UseAsync] = UseSync,
-# ) -> Coroutine[Any, Any, TGenericApiResponse]: ...
+@overload
+def parse_response(
+    response: Coroutine[Any, Any, httpx.Response],
+    parse_func: Callable[[httpx.Response], TGenericApiResponse],
+) -> Coroutine[Any, Any, TGenericApiResponse]: ...
 
 
 def parse_response(
     response: httpx.Response | Coroutine[Any, Any, httpx.Response],
     parse_func: Callable[[httpx.Response], TGenericApiResponse],
-    sync_type: type[UseSync] | type[UseAsync] = UseSync,
 ) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
-    result: TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]
     if isinstance(response, Coroutine):
         return modify_result_async(response, parse_func)
 

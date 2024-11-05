@@ -106,7 +106,7 @@ class ReedApiClient:
         )
 
         return utils.parse_response(
-            coro_or_response, utils._job_search_response_parser, sync_type=sync_type
+            coro_or_response, utils._job_search_response_parser
         )
 
     @overload
