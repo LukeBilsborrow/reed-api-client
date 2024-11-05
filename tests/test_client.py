@@ -71,3 +71,10 @@ async def test_job_search_async_is_non_blocking():
     # Assert both results are of the correct type
     assert isinstance(result1, _model.JobSearchResponse)
     assert isinstance(result2, _model.JobSearchResponse)
+
+def test_job_search_recognises_location():
+    _client = client.ReedApiClient(TOKEN)
+    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync)
+    second_result = _client.job_search(locationName="Preston", resultsToTake=1, sync_type=client.UseSync)
+
+    assert result.jobs[0].jobId != second_result.jobs[0].jobId
