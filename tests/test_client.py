@@ -22,7 +22,7 @@ def test_client_custom_url():
 
 def test_job_search():
     _client = client.ReedApiClient(TOKEN)
-    result = _client.job_search(locationName="London", resultsToTake=1, use_async=False)
+    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync)
 
     assert type(result) == _model.JobSearchResponse
 
@@ -30,7 +30,7 @@ def test_job_search():
 @pytest.mark.asyncio
 async def test_job_search_async():
     _client = client.ReedApiClient(TOKEN)
-    result = _client.job_search(locationName="London", resultsToTake=1, use_async=True)
+    result = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseAsync)
     result = await result
     print(result)
 
@@ -39,7 +39,7 @@ async def test_job_search_async():
 
 def test_job_detail():
     _client = client.ReedApiClient(TOKEN)
-    sample_job_id = _client.job_search(locationName="London", resultsToTake=1, use_async=False).jobs[0].jobId
-    result = _client.job_detail(sample_job_id, use_async=False)
+    sample_job_id = _client.job_search(locationName="London", resultsToTake=1, sync_type=client.UseSync).jobs[0].jobId
+    result = _client.job_detail(sample_job_id, sync_type=client.UseSync)
 
     assert type(result) == _model.JobDetailResponse and result.job is not None
