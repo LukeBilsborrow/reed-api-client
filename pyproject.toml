@@ -1,0 +1,13 @@
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+
+[tool.pylint]
+disable = ["missing-function-docstring", "missing-module-docstring", "missing-class-docstring"]  # Disable missing docstring warning
+
+[tool.yapf]
+based_on_style = "google"  # Options include 'pep8', 'google', 'facebook', 'chromium', 'yapf'
+indent_width = 4  # Set the number of spaces for indentation
+column_limit = 100  # Maximum line length
+spaces_before_comment = 2  # Spaces before comments
+split_before_logical_operator = true  # Split lines before logical operators
