@@ -81,6 +81,7 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
         # _date = datetime.strptime(date_string, "%Y-%m-%d")
         _date = datetime.strptime(date_string, "%d/%m/%Y")
     except BaseException:
+
         # TODO: Add logging
         pass
     return _date

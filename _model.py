@@ -52,6 +52,7 @@ class JobDetail(BaseModel):
     yearlyMinimumSalary: Optional[float]
     yearlyMaximumSalary: Optional[float]
     currency: Optional[str]
+
     salaryType: str
     salary: str
     postedDate: Optional[date] = Field(alias="datePosted")
