@@ -4,9 +4,7 @@ import os
 import dotenv
 import pytest
 
-import _model
-import client
-import utils
+from reedjobs import _model, client, utils
 
 pytest_plugins = ("pytest_asyncio",)
 dotenv.load_dotenv()
@@ -108,12 +106,21 @@ def test_job_search_recognises_location():
     result = _client.job_search(sync_type=client.UseSync,
                                 params={
                                     "location_name": "London",
-                                    "results_to_take": 1
+                                    "results_to_take": 1,
+                                    "distance_from_location": 10
                                 })
     second_result = _client.job_search(sync_type=client.UseSync,
                                        params={
-                                           "location_name": "Bristol",
-                                           "results_to_take": 1
+                                           "location_name": "Preston",
+                                           "results_to_take": 1,
+                                           "distance_from_location": 10
                                        })
 
-    assert result.jobs[0].jobId != second_result.jobs[0].jobId
+    third_result = _client.job_search(sync_type=client.UseSync,
+                                      params={
+                                          "location_name": "Aberdeen",
+                                          "results_to_take": 1,
+                                          "distance_from_location": 10
+                                      })
+
+    assert result.jobs[0].jobId != second_result.jobs[0].jobId != third_result.jobs[0].jobId
