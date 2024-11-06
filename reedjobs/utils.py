@@ -4,7 +4,7 @@ from urllib.parse import urlunparse
 
 import httpx
 
-import _model
+from reedjobs import _model
 
 REED_API_BASE_URL = "www.reed.co.uk"
 DEFAULT_API_PATH = "api"
@@ -21,7 +21,7 @@ UseAsync = NewType("UseAsync", bool)
 
 # pylint: disable=invalid-name
 TGenericApiResponse = TypeVar("TGenericApiResponse", bound="_model.APIResponseBaseModel")
-#pylint: enable=invalid-name
+# pylint: enable=invalid-name
 
 
 def get_base_url(
@@ -78,8 +78,11 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
     """
     _date = None
     try:
-        # _date = datetime.strptime(date_string, "%Y-%m-%d")
-        _date = datetime.strptime(date_string, "%d/%m/%Y")
+        _date = try_wrapper(lambda: datetime.strptime(date_string, "%d/%m/%Y"))
+
+        if not _date:
+            _date = try_wrapper(lambda: datetime.strptime(date_string, "%Y-%m-%d"))
+
     except BaseException:
 
         # TODO: Add logging
@@ -118,6 +121,7 @@ def parse_response(
 
 def check_response(response: httpx.Response) -> httpx.Response:
     if response.status_code != 200:
+        # TODO: make more specific exception
         raise Exception(f"Request failed with status code {response.status_code}")
     return response
 
@@ -146,3 +150,19 @@ def job_detail_response_parser(response: httpx.Response) -> "_model.JobDetailRes
                                             raw_response=response,
                                             raw_request=response.request)
     return result_model
+
+
+def try_wrapper(func: Callable) -> Any | None:
+    """
+    Executes a given function and returns its result, or None if an exception occurs.
+
+    Args:
+        func (Callable): The function to execute.
+
+    Returns:
+        Any | None: The result of the function if successful, otherwise None if an exception is raised.
+    """
+    try:
+        return func()
+    except BaseException:
+        return None

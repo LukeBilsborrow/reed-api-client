@@ -2,9 +2,8 @@ from typing import Any, Coroutine, Mapping, Optional, TypedDict, overload
 
 import httpx
 
-import _model
-import utils
-from utils import UseAsync, UseSync
+from reedjobs import _model, utils
+from reedjobs.utils import UseAsync, UseSync
 
 
 class JobSearchParams(TypedDict, total=False):

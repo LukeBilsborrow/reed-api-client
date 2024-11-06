@@ -4,7 +4,7 @@ from typing import Optional
 import httpx
 from pydantic import BaseModel, Field, field_validator
 
-import utils
+from reedjobs import utils
 
 
 class APIResponseBaseModel(BaseModel):
