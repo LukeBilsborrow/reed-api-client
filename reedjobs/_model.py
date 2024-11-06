@@ -52,18 +52,17 @@ class JobDetail(BaseModel):
     yearlyMinimumSalary: Optional[float]
     yearlyMaximumSalary: Optional[float]
     currency: Optional[str]
-
-    salaryType: str
-    salary: str
+    salaryType: Optional[str]
+    salary: Optional[str]
     postedDate: Optional[date] = Field(alias="datePosted")
     expirationDate: Optional[date]
-    externalUrl: str
+    externalUrl: Optional[str]
     jobUrl: str
-    partTime: bool
-    fullTime: bool
-    contractType: str
+    partTime: Optional[bool]
+    fullTime: Optional[bool]
+    contractType: Optional[str]
     jobDescription: str
-    applicationCount: int
+    applicationCount: Optional[int]
 
     validate_date_fields = field_validator("expirationDate", "postedDate",
                                            mode="before")(utils.parse_date_string)
