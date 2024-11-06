@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import (Any, Callable, Coroutine, NewType, Optional, TypeVar, overload)
+from typing import Any, Callable, Coroutine, NewType, Optional, TypeVar
 from urllib.parse import urlunparse
 
 import httpx
@@ -83,73 +83,69 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
         if not _date:
             _date = try_wrapper(lambda: datetime.strptime(date_string, "%Y-%m-%d"))
 
-    except BaseException:
+    except BaseException:  # pylint: disable=broad-except
 
         # TODO: Add logging
         pass
     return _date
 
 
-@overload
-def parse_response(
-    response: httpx.Response,
-    parse_func: Callable[[httpx.Response], TGenericApiResponse],
-) -> TGenericApiResponse:
-    ...
-
-
-@overload
-def parse_response(
-    response: Coroutine[Any, Any, httpx.Response],
-    parse_func: Callable[[httpx.Response], TGenericApiResponse],
-) -> Coroutine[Any, Any, TGenericApiResponse]:
-    ...
-
-
-def parse_response(
+def handle_response(
     response: httpx.Response | Coroutine[Any, Any, httpx.Response],
-    parse_func: Callable[[httpx.Response], TGenericApiResponse],
+    response_parser: Callable[[httpx.Response, dict], TGenericApiResponse],
 ) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
+
     if isinstance(response, Coroutine):
-        return modify_result_async(response, parse_func)
+        return _handle_response_async(response, response_parser)
 
-    if isinstance(response, httpx.Response):
-        return parse_func(response)
-
-    raise TypeError("response must be a httpx.Response object")
+    return _handle_response(response, response_parser)
 
 
-def check_response(response: httpx.Response) -> httpx.Response:
-    if response.status_code != 200:
-        # TODO: make more specific exception
-        raise Exception(f"Request failed with status code {response.status_code}")
-    return response
+# this method is responble for parsing the response and returning the parsed result
+def _handle_response(
+        response: httpx.Response,
+        response_parser: Callable[[httpx.Response, dict],
+                                  TGenericApiResponse]) -> TGenericApiResponse:
+    """
+    Parse a response from the REED API and return the parsed result.
 
+    Args:
+        response: The response from the REED API
+        result_parser: A function to parse the response
 
-async def modify_result_async(
-        coro, result_parser: Callable[[httpx.Response],
-                                      TGenericApiResponse]) -> TGenericApiResponse:
+    Returns:
+        Optional[TGenericApiResponse]: The parsed result, or None if the request failed
+    """
+    json_result = get_response_json(response)
 
-    coro_result: httpx.Response = await coro
-    parsed_result = result_parser(coro_result)
+    if json_result is None:
+        return None
+
+    parsed_result = response_parser(response, json_result)
     return parsed_result
 
 
-def job_search_response_parser(response: httpx.Response) -> "_model.JobSearchResponse":
-    models = [_model.JobSearchPartialJob(**job) for job in response.json()["results"]]
-    return _model.JobSearchResponse(jobs=models,
-                                    raw_response=response,
-                                    raw_request=response.request)
+async def _handle_response_async(
+        coro: Coroutine[Any, Any, httpx.Response],
+        result_parser: Callable[[httpx.Response, dict],
+                                TGenericApiResponse]) -> TGenericApiResponse:
+    """
+    An async wrapper for _handle_response
 
+    This method simply wraps the _handle_response method in an async context
+    and awaits the result of the coroutine passed in before passing it to the
+    _handle_response method
 
-def job_detail_response_parser(response: httpx.Response) -> "_model.JobDetailResponse":
-    raw_response_data = response.json()
+    Args:
+        coro: The coroutine to await
+        result_parser: The function to parse the response with
 
-    data = _model.JobDetail(**raw_response_data)
-    result_model = _model.JobDetailResponse(job=data,
-                                            raw_response=response,
-                                            raw_request=response.request)
-    return result_model
+    Returns:
+        The parsed result of the response, or None
+    """
+    coro_result: httpx.Response = await coro
+    parsed_result = _handle_response(coro_result, result_parser)
+    return parsed_result
 
 
 def try_wrapper(func: Callable) -> Any | None:
@@ -160,9 +156,46 @@ def try_wrapper(func: Callable) -> Any | None:
         func (Callable): The function to execute.
 
     Returns:
-        Any | None: The result of the function if successful, otherwise None if an exception is raised.
+        Any | None: The result of the function if successful, otherwise None if an exception occurs.
     """
     try:
         return func()
-    except BaseException:
+    except BaseException:  # pylint: disable=broad-except
         return None
+
+
+def get_response_json(response: httpx.Response) -> dict:
+
+    try:
+        response.raise_for_status()
+        data = response.json()
+
+    except BaseException:  # pylint: disable=broad-except
+        # TODO: Add logging
+        data = None
+    return data
+
+
+def job_search_response_parser(response: httpx.Response,
+                               response_data: dict) -> "_model.JobSearchResponse":
+    models = [_model.JobSearchPartialJob(**job) for job in response_data["results"]]
+    return _model.JobSearchResponse(jobs=models,
+                                    raw_response=response,
+                                    raw_request=response.request)
+
+
+def job_detail_response_parser(response: httpx.Response,
+                               response_data: dict) -> "_model.JobDetailResponse":
+
+    data = _model.JobDetail(**response_data)
+    result_model = _model.JobDetailResponse(job=data,
+                                            raw_response=response,
+                                            raw_request=response.request)
+    return result_model
+
+
+def to_camel_case(snake_str):
+    snake_str = snake_str.lower()
+    new_str = "".join(x.capitalize() for x in snake_str.split("_"))
+    new_str = new_str[0].lower() + new_str[1:]
+    return new_str

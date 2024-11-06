@@ -72,7 +72,9 @@ class ReedApiClient:
                                               sync_type=sync_type,
                                               params=params)
 
-        return utils.parse_response(coro_or_response, utils.job_search_response_parser)
+        result = utils.handle_response(coro_or_response, utils.job_search_response_parser)
+
+        return result
 
     @overload
     def job_detail(self,
@@ -94,7 +96,7 @@ class ReedApiClient:
         detail_url = utils.get_detail_url(job_id, self.base_url)
         response_or_coro = self._make_request(detail_url, sync_type=sync_type)
 
-        model = utils.parse_response(response_or_coro, utils.job_detail_response_parser)
+        model = utils.handle_response(response_or_coro, utils.job_detail_response_parser)
         return model
 
     @overload
@@ -124,6 +126,8 @@ class ReedApiClient:
     ) -> httpx.Response | Coroutine[Any, Any, httpx.Response]:
         if params:
             params = {k: v for k, v in params.items() if v is not None}
+            # convert param names to camel case
+            params = {utils.to_camel_case(k): v for k, v in params.items()}
         if sync_type is UseAsync:
             _coro: Coroutine[Any, Any, httpx.Response] = self._make_async_request(url, params)
             return _coro
@@ -141,7 +145,6 @@ class ReedApiClient:
         except BaseException as e:
             # TODO add logging
             raise e
-        response = utils.check_response(response)
 
         return response
 
@@ -158,7 +161,6 @@ class ReedApiClient:
             except BaseException as e:
                 # TODO add logging
                 raise e
-            response = utils.check_response(response)
 
             return response
 
