@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import date
-from typing import Optional
+from typing import Union
 
 import httpx
 from pydantic import BaseModel, Field, field_validator
@@ -8,68 +10,12 @@ from reedjobs import utils
 
 
 class APIResponseBaseModel(BaseModel):
-    raw_request: Optional[httpx.Request]
-    raw_response: Optional[httpx.Response]
+    raw_request: httpx.Request
+    raw_response: httpx.Response
+    success: bool = True
 
     class Config:  # pylint: disable=too-few-public-methods
         arbitrary_types_allowed = True
-
-
-class JobSearchPartialJob(BaseModel):
-    jobId: int
-    employerId: int
-    employerName: str
-    employerProfileId: Optional[int]
-    employerProfileName: Optional[str]
-    jobTitle: str
-    locationName: str
-    minimumSalary: Optional[float]
-    maximumSalary: Optional[float]
-    currency: Optional[str]
-    expirationDate: Optional[date]
-    postedDate: Optional[date] = Field(alias="date")
-    jobDescription: str
-    applications: int
-    jobUrl: str
-
-    validate_date_fields = field_validator("expirationDate", "postedDate",
-                                           mode="before")(utils.parse_date_string)
-
-
-class JobSearchResponse(APIResponseBaseModel):
-
-    jobs: list[JobSearchPartialJob]
-
-
-class JobDetail(BaseModel):
-    employerId: Optional[int]
-    employerName: str
-    jobId: int
-    jobTitle: str
-    locationName: str
-    minimumSalary: Optional[float]
-    maximumSalary: Optional[float]
-    yearlyMinimumSalary: Optional[float]
-    yearlyMaximumSalary: Optional[float]
-    currency: Optional[str]
-    salaryType: Optional[str]
-    salary: Optional[str]
-    postedDate: Optional[date] = Field(alias="datePosted")
-    expirationDate: Optional[date]
-    externalUrl: Optional[str]
-    jobUrl: str
-    partTime: Optional[bool]
-    fullTime: Optional[bool]
-    contractType: Optional[str]
-    jobDescription: str
-    applicationCount: Optional[int]
-
-    validate_date_fields = field_validator("expirationDate", "postedDate",
-                                           mode="before")(utils.parse_date_string)
-
-
-class JobDetailResponse(APIResponseBaseModel):
-    job: JobDetail
 
 
 class JobSearchRequest(BaseModel):
@@ -77,30 +23,30 @@ class JobSearchRequest(BaseModel):
     A pydantic model for the request body
     """
 
-    employerId: Optional[int] = None
-    employerProfileId: Optional[int] = None
-    keywords: Optional[str] = None
-    locationName: Optional[str] = None
-    distanceFromLocation: Optional[int] = 10
-    permanent: Optional[bool] = None
-    contract: Optional[bool] = None
-    temp: Optional[bool] = None
-    partTime: Optional[bool] = None
-    fullTime: Optional[bool] = None
-    minimumSalary: Optional[int] = None
-    maximumSalary: Optional[int] = None
-    postedByRecruitmentAgency: Optional[bool] = None
-    postedByDirectEmployer: Optional[bool] = None
-    graduate: Optional[bool] = None
-    resultsToTake: Optional[int] = 100
-    resultsToSkip: Optional[int] = 0
+    employerId: Union[int, None]
+    employerProfileId: Union[int, None]
+    keywords: Union[str, None]
+    locationName: Union[str, None]
+    distanceFromLocation: Union[int, None] = 10
+    permanent: Union[bool, None]
+    contract: Union[bool, None]
+    temp: Union[bool, None]
+    partTime: Union[bool, None]
+    fullTime: Union[bool, None]
+    minimumSalary: Union[int, None]
+    maximumSalary: Union[int, None]
+    postedByRecruitmentAgency: Union[bool, None]
+    postedByDirectEmployer: Union[bool, None]
+    graduate: Union[bool, None]
+    resultsToTake: Union[int, None] = 100
+    resultsToSkip: Union[int, None] = 0
 
     @field_validator("distanceFromLocation")
     # pylint: disable=no-self-argument, invalid-name
     def distanceFromLocation_cannot_be_negative(cls, v):
         # pylint: enable=no-self-argument, invalid-name
 
-        if v < 0:
+        if v is not None and v < 0:
             raise ValueError("distanceFromLocation must be a positive number")
         return v
 
@@ -109,7 +55,7 @@ class JobSearchRequest(BaseModel):
     def resultsToTake_cannot_be_too_large(cls, v):
         # pylint: enable=no-self-argument, invalid-name
 
-        if v > 100:
+        if v is not None and v > 100:
             raise ValueError("resultsToTake must be less than or equal to 100")
         return v
 
@@ -118,7 +64,7 @@ class JobSearchRequest(BaseModel):
     def resultsToSkip_cannot_be_negative(cls, v):
         # pylint: enable=no-self-argument, invalid-name
 
-        if v < 0:
+        if v is not None and v < 0:
             raise ValueError("resultsToSkip must be a positive number")
         return v
 
@@ -126,3 +72,60 @@ class JobSearchRequest(BaseModel):
 class JobDetailRequest(JobSearchRequest):
     # pylint: disable=too-few-public-methods
     jobId: int
+
+
+class JobSearchPartialJob(BaseModel):
+    jobId: int
+    employerId: int
+    employerName: str
+    employerProfileId: Union[int, None]
+    employerProfileName: Union[str, None]
+    jobTitle: str
+    locationName: str
+    minimumSalary: Union[float, None]
+    maximumSalary: Union[float, None]
+    currency: Union[str, None]
+    expirationDate: Union[date, None]
+    postedDate: Union[date, None] = Field(alias="date")
+    jobDescription: str
+    applications: int
+    jobUrl: str
+
+    validate_date_fields = field_validator("expirationDate", "postedDate",
+                                           mode="before")(utils.parse_date_string)
+
+
+class JobDetail(BaseModel):
+    employerId: Union[int, None]
+    employerName: str
+    jobId: int
+    jobTitle: str
+    locationName: str
+    minimumSalary: Union[float, None]
+    maximumSalary: Union[float, None]
+    yearlyMinimumSalary: Union[float, None]
+    yearlyMaximumSalary: Union[float, None]
+    currency: Union[str, None]
+    salaryType: Union[str, None]
+    salary: Union[str, None]
+    postedDate: Union[date, None] = Field(alias="datePosted")
+    expirationDate: Union[date, None]
+    externalUrl: Union[str, None]
+    jobUrl: str
+    partTime: Union[bool, None]
+    fullTime: Union[bool, None]
+    contractType: Union[str, None]
+    jobDescription: str
+    applicationCount: Union[int, None]
+
+    validate_date_fields = field_validator("expirationDate", "postedDate",
+                                           mode="before")(utils.parse_date_string)
+
+
+class JobSearchResponse(APIResponseBaseModel):
+
+    jobs: Union[list[JobSearchPartialJob], None] = None
+
+
+class JobDetailResponse(APIResponseBaseModel):
+    job: Union[JobDetail, None]
