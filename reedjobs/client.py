@@ -1,9 +1,11 @@
-from typing import Any, Coroutine, Mapping, Optional, TypedDict, overload
+from __future__ import annotations
+
+from typing import (Any, Coroutine, Mapping, Optional, TypedDict, Union, overload)
 
 import httpx
 
 from reedjobs import _model, utils
-from reedjobs.utils import UseAsync, UseSync
+from reedjobs._types import Syncness, UseAsync, UseSync
 
 
 class JobSearchParams(TypedDict, total=False):
@@ -65,8 +67,8 @@ class ReedApiClient:
         self,
         *,
         params: JobSearchParams,
-        sync_type: type[UseSync] | type[UseAsync] = UseSync,
-    ) -> _model.JobSearchResponse | Coroutine[Any, Any, _model.JobSearchResponse]:
+        sync_type: Syncness = UseSync,
+    ) -> Union[_model.JobSearchResponse, Coroutine[Any, Any, _model.JobSearchResponse]]:
 
         coro_or_response = self._make_request(utils.get_search_url(self.base_url),
                                               sync_type=sync_type,
@@ -91,7 +93,7 @@ class ReedApiClient:
             sync_type: type[UseAsync] = ...) -> Coroutine[Any, Any, _model.JobDetailResponse]:
         ...
 
-    def job_detail(self, job_id: int, *, sync_type: type[UseSync] | type[UseAsync] = UseSync):
+    def job_detail(self, job_id: int, *, sync_type: Syncness = UseSync):
 
         detail_url = utils.get_detail_url(job_id, self.base_url)
         response_or_coro = self._make_request(detail_url, sync_type=sync_type)
@@ -120,10 +122,10 @@ class ReedApiClient:
         self,
         url: str,
         *,
-        sync_type: type[UseSync] | type[UseAsync] = UseSync,
+        sync_type: Syncness = UseSync,
         # probably should not have mutable default
         params: Optional[Mapping[str, Any]] = None
-    ) -> httpx.Response | Coroutine[Any, Any, httpx.Response]:
+    ) -> Union[httpx.Response, Coroutine[Any, Any, httpx.Response]]:
         if params:
             params = {k: v for k, v in params.items() if v is not None}
             # convert param names to camel case
