@@ -1,19 +1,18 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Callable, Coroutine, NewType, Optional, TypeVar
+from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 from urllib.parse import urlunparse
 
 import httpx
 
-from reedjobs import _model
+from reedjobs import _model, _types
 
 REED_API_BASE_URL = "www.reed.co.uk"
 DEFAULT_API_PATH = "api"
 DEFAULT_VERSION_STRING = "1.0"
 DEFAULT_PROTOCOL = "https"
 JOB_SEARCH_PATH = "search"
-
-UseSync = NewType("UseSync", bool)
-UseAsync = NewType("UseAsync", bool)
 
 # A generic type to represent the type a parser function should return
 # This can be any type that inherits from _model.APIResponseBaseModel
@@ -91,8 +90,8 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
 
 
 def handle_response(
-    response: httpx.Response | Coroutine[Any, Any, httpx.Response],
-    response_parser: Callable[[httpx.Response, dict], TGenericApiResponse],
+    response: _types.PossiblyAsyncResponse,
+    response_parser: Callable[[httpx.Response, Union[dict, None]], TGenericApiResponse],
 ) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
 
     if isinstance(response, Coroutine):
@@ -103,9 +102,9 @@ def handle_response(
 
 # this method is responble for parsing the response and returning the parsed result
 def _handle_response(
-        response: httpx.Response,
-        response_parser: Callable[[httpx.Response, dict],
-                                  TGenericApiResponse]) -> TGenericApiResponse:
+    response: httpx.Response, response_parser: Callable[[httpx.Response, Union[dict, None]],
+                                                        TGenericApiResponse]
+) -> TGenericApiResponse:
     """
     Parse a response from the REED API and return the parsed result.
 
@@ -116,19 +115,19 @@ def _handle_response(
     Returns:
         Optional[TGenericApiResponse]: The parsed result, or None if the request failed
     """
+
     json_result = get_response_json(response)
 
-    if json_result is None:
-        return None
-
+    # it is up to the response parser to handle the case where the input data is None
     parsed_result = response_parser(response, json_result)
     return parsed_result
 
 
 async def _handle_response_async(
-        coro: Coroutine[Any, Any, httpx.Response],
-        result_parser: Callable[[httpx.Response, dict],
-                                TGenericApiResponse]) -> TGenericApiResponse:
+    coro: Coroutine[Any, Any,
+                    httpx.Response], result_parser: Callable[[httpx.Response, Union[dict, None]],
+                                                             TGenericApiResponse]
+) -> TGenericApiResponse:
     """
     An async wrapper for _handle_response
 
@@ -164,7 +163,7 @@ def try_wrapper(func: Callable) -> Any | None:
         return None
 
 
-def get_response_json(response: httpx.Response) -> dict:
+def get_response_json(response: httpx.Response) -> Optional[dict]:
 
     try:
         response.raise_for_status()
@@ -177,7 +176,13 @@ def get_response_json(response: httpx.Response) -> dict:
 
 
 def job_search_response_parser(response: httpx.Response,
-                               response_data: dict) -> "_model.JobSearchResponse":
+                               response_data: Optional[dict]) -> "_model.JobSearchResponse":
+
+    if not response_data:
+        return _model.JobSearchResponse(raw_request=response.request,
+                                        raw_response=response,
+                                        success=False)
+
     models = [_model.JobSearchPartialJob(**job) for job in response_data["results"]]
     return _model.JobSearchResponse(jobs=models,
                                     raw_response=response,
@@ -185,9 +190,11 @@ def job_search_response_parser(response: httpx.Response,
 
 
 def job_detail_response_parser(response: httpx.Response,
-                               response_data: dict) -> "_model.JobDetailResponse":
-
-    data = _model.JobDetail(**response_data)
+                               response_data: Union[dict, None]) -> "_model.JobDetailResponse":
+    if not response_data:
+        data = None
+    else:
+        data = _model.JobDetail(**response_data)
     result_model = _model.JobDetailResponse(job=data,
                                             raw_response=response,
                                             raw_request=response.request)
