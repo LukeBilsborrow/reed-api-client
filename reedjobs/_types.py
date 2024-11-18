@@ -1,4 +1,6 @@
-from typing import Any, Coroutine, NewType, Union
+from __future__ import annotations
+
+from typing import Any, Coroutine, NewType, Type, Union
 
 import httpx
 
@@ -6,4 +8,4 @@ UseSync = NewType("UseSync", bool)
 UseAsync = NewType("UseAsync", bool)
 
 PossiblyAsyncResponse = Union[httpx.Response, Coroutine[Any, Any, httpx.Response]]
-Syncness = Union[type[UseSync], type[UseAsync]]
+Syncness = Union[Type[UseSync], Type[UseAsync]]

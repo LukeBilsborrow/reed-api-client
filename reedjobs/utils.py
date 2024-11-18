@@ -52,7 +52,7 @@ def get_base_url(
     return url
 
 
-def get_detail_url(job_id: int | str, base_url: Optional[str] = get_base_url()) -> str:
+def get_detail_url(job_id: Union[int, str], base_url: Optional[str] = get_base_url()) -> str:
     # https://www.reed.co.uk/api/1.0/jobs/132
     _url = f"{base_url}/jobs/{job_id}"
     return _url
@@ -92,7 +92,7 @@ def parse_date_string(date_string: str) -> Optional[datetime]:
 def handle_response(
     response: _types.PossiblyAsyncResponse,
     response_parser: Callable[[httpx.Response, Union[dict, None]], TGenericApiResponse],
-) -> TGenericApiResponse | Coroutine[Any, Any, TGenericApiResponse]:
+) -> Union[TGenericApiResponse, Coroutine[Any, Any, TGenericApiResponse]]:
 
     if isinstance(response, Coroutine):
         return _handle_response_async(response, response_parser)
@@ -147,7 +147,7 @@ async def _handle_response_async(
     return parsed_result
 
 
-def try_wrapper(func: Callable) -> Any | None:
+def try_wrapper(func: Callable) -> Any:
     """
     Executes a given function and returns its result, or None if an exception occurs.
 
@@ -155,7 +155,7 @@ def try_wrapper(func: Callable) -> Any | None:
         func (Callable): The function to execute.
 
     Returns:
-        Any | None: The result of the function if successful, otherwise None if an exception occurs.
+        Any: The result of the function if successful, otherwise None if an exception occurs.
     """
     try:
         return func()
@@ -176,7 +176,7 @@ def get_response_json(response: httpx.Response) -> Optional[dict]:
 
 
 def job_search_response_parser(response: httpx.Response,
-                               response_data: Optional[dict]) -> "_model.JobSearchResponse":
+                               response_data: Optional[dict]) -> _model.JobSearchResponse:
 
     if not response_data:
         return _model.JobSearchResponse(raw_request=response.request,
@@ -190,7 +190,7 @@ def job_search_response_parser(response: httpx.Response,
 
 
 def job_detail_response_parser(response: httpx.Response,
-                               response_data: Union[dict, None]) -> "_model.JobDetailResponse":
+                               response_data: Union[dict, None]) -> _model.JobDetailResponse:
     if not response_data:
         data = None
     else:

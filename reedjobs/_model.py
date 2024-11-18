@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from datetime import date
-from typing import Union
+from typing import List, Union
 
 import httpx
 from pydantic import BaseModel, Field, field_validator
@@ -124,7 +122,7 @@ class JobDetail(BaseModel):
 
 class JobSearchResponse(APIResponseBaseModel):
 
-    jobs: Union[list[JobSearchPartialJob], None] = None
+    jobs: Union[List[JobSearchPartialJob], None] = None
 
 
 class JobDetailResponse(APIResponseBaseModel):
