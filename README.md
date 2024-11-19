@@ -33,10 +33,9 @@ To use the ReedJobs client, you need to have an API token from Reed. You can get
 ### Example
 
 ```python
-import os
 from reedjobs import ReedApiClient, UseSync, UseAsync
 
-api_token = os.getenv("REED_API_KEY")  
+api_token = "example_key"  
 # Ensure your API key is set
 client = ReedApiClient(api_token)
 
