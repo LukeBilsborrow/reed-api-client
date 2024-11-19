@@ -16,6 +16,7 @@ This library covers only the Jobseeker API.
 
 To install ReedJobs, simply use pip:
 
+NOT AVAILABLE YET
 ```bash
 pip install reedjobs
 ```
