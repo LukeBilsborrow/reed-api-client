@@ -5,7 +5,7 @@ from typing import (Any, Coroutine, Mapping, Optional, TypedDict, Union, overloa
 import httpx
 
 from reedjobs import _model, utils
-from reedjobs._types import Syncness, UseAsync, UseSync
+from reedjobs._types import PossiblyAsyncResponse, Syncness, UseAsync, UseSync
 
 
 class JobSearchParams(TypedDict, total=False):
@@ -125,7 +125,7 @@ class ReedApiClient:
         sync_type: Syncness = UseSync,
         # probably should not have mutable default
         params: Optional[Mapping[str, Any]] = None
-    ) -> Union[httpx.Response, Coroutine[Any, Any, httpx.Response]]:
+    ) -> PossiblyAsyncResponse:
         if params:
             params = {k: v for k, v in params.items() if v is not None}
             # convert param names to camel case
